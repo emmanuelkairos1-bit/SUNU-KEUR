@@ -44,6 +44,12 @@ export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   // ---------------- MODE LOCAL ----------------
+  // Intercepte le code de confirmation email amené à la racine (?code=...)
+  // par le lien Supabase Auth et le route vers le handler qui crée la session.
+  const codeConfirmation = request.nextUrl.searchParams.get("code");
+  if (codeConfirmation && path === "/") {
+    return NextResponse.redirect(`${baseOrigin}/auth/callback?code=${encodeURIComponent(codeConfirmation)}`);
+  }
   if (estLocal()) {
     const uid = request.cookies.get(CLE_COOKIE_LOCAL)?.value;
     if (estProtegee && !uid) {
