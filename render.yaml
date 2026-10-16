@@ -1,0 +1,71 @@
+# ============================================================================
+# SUNU KEUR — Render Blueprint
+# "New +" → "Blueprint" → connecte le repo GitHub : Render crée les 2 services.
+#
+# ⚠️ APRÈS LA CRÉATION, vérifie que les URLs ci-dessous correspondent bien aux
+#    URLs réelles générées (Settings de chaque service) et lance un "Manual Deploy"
+#    sur le front si tu les as modifiées (NEXT_PUBLIC_* est figé au build).
+# ============================================================================
+
+services:
+  # ---------------------------------------------------------------- BACKEND --
+  - type: web
+    name: sunu-keur-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      # URL publique de CE service (sert aux liens/QR codes dans les PDF).
+      - key: BASE_URL
+        value: https://sunu-keur-api.onrender.com
+      # URL du front (CORS).
+      - key: FRONTEND_URL
+        value: https://sunu-keur-web.onrender.com
+      # Mode LOCAL (localStorage) sans Supabase : laisser vides → compatible.
+      # Renseigne-les + les clés du front pour basculer en mode Supabase réel.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      # Paiements (optionnel — laisser vides pour commencer).
+      - key: WAVE_API_KEY
+        sync: false
+      - key: WAVE_MERCHANT_ID
+        sync: false
+      - key: WAVE_WEBHOOK_SECRET
+        sync: false
+      - key: ORANGE_MONEY_API_KEY
+        sync: false
+      - key: ORANGE_MONEY_MERCHANT_ID
+        sync: false
+      # Fichiers générés : disque éphémère sur le free plan (regénérés à la volée).
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+  # --------------------------------------------------------------- FRONTEND --
+  - type: web
+    name: sunu-keur-web
+    runtime: node
+    rootDir: frontend
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /login
+    autoDeploy: true
+    envVars:
+      # ⚠️ NEXT_PUBLIC_* est inliné AU BUILD → doit être juste avant le build.
+      - key: NEXT_PUBLIC_FASTAPI_URL
+        value: https://sunu-keur-api.onrender.com
+      - key: NEXT_PUBLIC_SITE_URL
+        value: https://sunu-keur-web.onrender.com
+      # Mode LOCAL : laisser vides (compatible) — ou renseigner pour Supabase réel.
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: NODE_ENV
+        value: production

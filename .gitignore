@@ -1,0 +1,33 @@
+# ================= Dépendances =================
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ================= Build Next.js =================
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# ================= Documents générés (PDF/DOCX/XLSX) =================
+backend/generated/
+
+# ================= Secrets / environnement =================
+# Seuls les fichiers *.example sont versionnés.
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env.local
+
+# ================= Divers =================
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+opencode.json.txt
