@@ -5,13 +5,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Format monétaire FCFA (XOF)
+// Format monétaire FCFA (XOF) — « 249 657 F CFA » (Intl inclut déjà l'unité)
 export function fcfa(n: number): string {
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "XOF",
     maximumFractionDigits: 0
-  }).format(n || 0) + " F";
+  }).format(n || 0);
 }
 
 export function fcfaCompact(n: number): string {
