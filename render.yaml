@@ -68,8 +68,9 @@ services:
         sync: false
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
         sync: false
-      - key: NODE_ENV
-        value: production
+      # ⚠️ Ne JAMAIS mettre NODE_ENV=production ici : `npm install` omettrait
+      # alors les devDependencies (tailwindcss, postcss, typescript) et le
+      # build Next échouerait. next build/next start définissent NODE_ENV eux-mêmes.
       # LTS compatible Next.js 14 (le local tourne en Node 24, sans différence).
       - key: NODE_VERSION
         value: "22"

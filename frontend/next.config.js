@@ -13,6 +13,9 @@ const nextConfig = {
   // L'analyse ESLint reste disponible via `npm run lint` ; on ne la bloque pas
   // au build (gain de mémoire/temps, indispensable sur le plan gratuit Render).
   eslint: { ignoreDuringBuilds: true },
+  // Vérifié en local avec `tsc --noEmit` (0 erreur) : on évite le processus
+  // TypeScript supplémentaire au build pour tenir dans les 512 Mo de Render.
+  typescript: { ignoreDuringBuilds: true },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**.supabase.co" },
