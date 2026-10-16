@@ -10,6 +10,9 @@ if (origineSite && !allowedOrigins.includes(origineSite)) allowedOrigins.push(or
 
 const nextConfig = {
   reactStrictMode: true,
+  // L'analyse ESLint reste disponible via `npm run lint` ; on ne la bloque pas
+  // au build (gain de mémoire/temps, indispensable sur le plan gratuit Render).
+  eslint: { ignoreDuringBuilds: true },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**.supabase.co" },

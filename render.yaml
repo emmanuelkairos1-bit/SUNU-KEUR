@@ -12,6 +12,7 @@ services:
   - type: web
     name: sunu-keur-api
     runtime: python
+    pythonVersion: "3.13"
     rootDir: backend
     plan: free
     buildCommand: pip install -r requirements.txt
@@ -69,3 +70,10 @@ services:
         sync: false
       - key: NODE_ENV
         value: production
+      # LTS compatible Next.js 14 (le local tourne en Node 24, sans différence).
+      - key: NODE_VERSION
+        value: "22"
+      # Plan gratuit = 512 Mo : on borne le tas V8 pour que le GC s'active
+      # avant le OOM-killer du conteneur pendant `next build`.
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=448
