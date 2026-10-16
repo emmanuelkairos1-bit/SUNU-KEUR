@@ -78,25 +78,38 @@ python main.py                     # http://localhost:8000  — health: /api/hea
 
 ---
 
-## 📦 Déploiement (GitHub + Render)
+## 📦 Déploiement (GitHub + Render) — EN LIGNE
 
-Le déploiement passe par **GitHub** (code source) et **Render** (Blueprint `render.yaml` à la racine → 2 services : API + Web).
+Le déploiement passe par **GitHub** (code source) et **Render** (2 services : API + Web).
+
+### 🟢 Production actuelle
+| Service | URL publique | Health |
+|---|---|---|
+| **Web** (Next.js) | https://sunu-keur-web.onrender.com | `/login` |
+| **API** (FastAPI) | https://sunu-keur-api.onrender.com | `/api/health` |
 
 ### 1. Pousser sur GitHub
 ```bash
-git init
 git add .
-git commit -m "SUNU KEUR"
-gh repo create SUNU-KEUR --private --source=. --push
+git commit -m "Ma modification"
+git push origin master
 ```
 
-### 2. Déployer sur Render
-1. Sur [render.com](https://render.com) : **New + → Blueprint** → connecte le repo GitHub.
-2. Render lit `render.yaml` et crée :
-   - `sunu-keur-api` (Python/FastAPI, health `/api/health`)
-   - `sunu-keur-web` (Node/Next.js, health `/login`)
-3. **Vérifie les URLs** dans *Settings* de chaque service, corrige `BASE_URL` + `FRONTEND_URL` (API) puis `NEXT_PUBLIC_FASTAPI_URL` + `NEXT_PUBLIC_SITE_URL` (Web) si elles diffèrent.
-4. Relance un **Manual Deploy** sur le Web (les `NEXT_PUBLIC_*` sont figés au build).
+### 2. Redéployer sur Render
+Les 2 services ont `autoDeploy: off` (pas de webhook) : après un push, relance le build **manuellement** —
+soit dans le dashboard Render (*service → Manual Deploy → Deploy latest commit*), soit via l'API :
+```bash
+# POST https://api.render.com/v1/services/{serviceId}/deploys
+#   srv-db8vn8gn74is73d0joo0 = sunu-keur-api
+#   srv-db8vncgn74is73d0k9kg = sunu-keur-web
+```
+> ⚠️ **`NEXT_PUBLIC_*` figés au build** : toute modification d'env var côté Web impose un redeploy complet.
+
+> 🔓 **Repo actuellement public** : c'est ce qui permet à Render de le fetcher (l'intégration GitHub du
+> compte Render est reliée à un autre compte GitHub que celui qui héberge le repo). Pour repasser le repo
+> en **privé** : connecte le compte GitHub du repo dans Render (*Account Settings → Git Deployment
+> Credentials*), puis `gh repo edit --visibility private`. N'oublie pas que `render.yaml` sert de contrat
+> pour recréer les services via **New + → Blueprint**.
 
 > **Mode LOCAL** (par défaut) : aucun compte Supabase requis — données en `localStorage`, documents réels générés par l'API. Pour passer en **mode Supabase réel**, renseigne `SUPABASE_URL` / `SUPABASE_SERVICE_KEY` côté API et `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` côté Web (voir `.env.example`), puis exécute `supabase/schema.sql`.
 
