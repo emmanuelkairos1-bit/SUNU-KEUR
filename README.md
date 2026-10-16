@@ -4,6 +4,9 @@
 
 SaaS de gestion locative pour gérants sénégalais. Il remplace le cahier par un dashboard qui **encaisse**, **relance sur WhatsApp** et **rassure les propriétaires de la diaspora** avec des rapports transparents.
 
+[![Déployer sur Render](https://render.com/images/template-button.svg)](https://render.com/deploy?template=https://github.com/emmanuelkairos1-bit/SUNU-KEUR)
+[![Voir sur GitHub](https://img.shields.io/badge/GitHub-SUNU__KEUR-181717?logo=github)](https://github.com/emmanuelkairos1-bit/SUNU-KEUR)
+
 ---
 
 ## 🧱 Stack technique
