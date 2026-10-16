@@ -7,8 +7,8 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, ArrowLeft, ArrowRight, MailCheck } from "lucide-react";
-import { getSupabaseBrowser } from "@/lib/supabase/client";
+import { AlertCircle, ArrowLeft, ArrowRight, MailCheck, Smartphone, Send } from "lucide-react";
+import { getSupabaseBrowser, estModeLocal } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/auth-provider";
 import { destinationParRole } from "@/lib/rbac";
 import type { RoleUtilisateur } from "@/lib/types";
@@ -48,12 +48,18 @@ export default function SignupPage() {
 
   const [nom, setNom] = useState("");
   const [email, setEmail] = useState("");
+  const [telephone, setTelephone] = useState("");
   const [motDePasse, setMotDePasse] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [role, setRole] = useState<RoleUtilisateur>("gerant");
   const [erreur, setErreur] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
   const [emailEnvoye, setEmailEnvoye] = useState(false);
+  const [vue, setVue] = useState<"infos" | "otp">("infos");
+  // code attendu en mode local (shim). En mode réel, Supabase envoie le code.
+  const CODE_DEV = "123456";
+  const [codeSms, setCodeSms] = useState("");
+  const [smsInfo, setSmsInfo] = useState<string | null>(null);
 
   async function inscrire(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -89,6 +95,7 @@ export default function SignupPage() {
         id: data.user.id,
         email: email.trim(),
         nom: nom.trim(),
+        telephone: telephone.trim() || null,
         role
       });
 
@@ -100,7 +107,7 @@ export default function SignupPage() {
       }
 
       if (data.session) {
-        // Le profil (table users) vient d'être inséré : on resynchronise le
+        // Le profil vient d'être inséré : on resynchronise le
         // AuthProvider pour que le dashboard voie tout de suite le profil.
         await refresh();
 
@@ -120,6 +127,29 @@ export default function SignupPage() {
           }
         }
 
+        // Confirmation par code SMS (le lien « Confirmer l'adresse email »
+        // est abandonné). Si le provider SMS n'est pas configuré, on bascule
+        // sans blocage et on avertit — la confirmation se fait autrement.
+        const telNormalise = telephone.trim().startsWith("+")
+          ? telephone.trim()
+          : `+221${telephone.trim().replace(/\\s+/g, "").replace(/^0/, "")}`;
+        if (telNormalise.replace(/\D/g, "").length >= 9 && data.session) {
+          if (estModeLocal()) {
+            setVue("otp");
+            setEnvoi(false);
+            return;
+          }
+          const { error: updError } = await supabase.auth.updateUser({ phone: telNormalise });
+          if (!updError) {
+            setVue("otp");
+            setEnvoi(false);
+            return;
+          }
+          setSmsInfo(
+            `Compte créé — service SMS momentanément indisponible (${updError.message}). Le compte reste utilisable.`
+          );
+        }
+
         // Seul un gérant configure ses immeubles ; un locataire ou un
         // propriétaire atterrit directement dans son propre espace.
         const destination =
@@ -131,6 +161,70 @@ export default function SignupPage() {
       setEmailEnvoye(true);
     } finally {
       setEnvoi(false);
+    }
+  }
+
+  async function verifierCode(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setErreur(null);
+    const code = codeSms.trim();
+    if (!code) {
+      setErreur("Entrez le code reçu par SMS.");
+      return;
+    }
+    setEnvoi(true);
+    try {
+      if (estModeLocal()) {
+        if (code === CODE_DEV) {
+          const destination = role === "gerant" || role === "super_admin" ? "/onboarding" : destinationParRole(role);
+          router.replace(destination);
+          router.refresh();
+          return;
+        }
+        setErreur("Code invalide. En mode démonstration : 123456.");
+        return;
+      }
+      const telNormalise = telephone.trim().startsWith("+")
+        ? telephone.trim()
+        : `+221${telephone.trim().replace(/\\s+/g, "").replace(/^0/, "")}`;
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: telNormalise,
+        token: code,
+        type: "phone_change"
+      });
+      if (error) {
+        setErreur(messageErreur(error.message));
+        return;
+      }
+      if (data.user) {
+        await supabase
+          .from("users")
+          .update({ telephone: telNormalise })
+          .eq("id", data.user.id);
+      }
+      const destination = role === "gerant" || role === "super_admin" ? "/onboarding" : destinationParRole(role);
+      router.replace(destination);
+      router.refresh();
+    } finally {
+      setEnvoi(false);
+    }
+  }
+
+  async function renvoyerCode() {
+    setErreur(null);
+    const telNormalise = telephone.trim().startsWith("+")
+      ? telephone.trim()
+      : `+221${telephone.trim().replace(/\\s+/g, "").replace(/^0/, "")}`;
+    if (estModeLocal()) {
+      setSmsInfo("Mode démo : reprise du code 123456.");
+      return;
+    }
+    try {
+      const { error } = await supabase.auth.updateUser({ phone: telNormalise });
+      if (error) setErreur(messageErreur(error.message));
+      else setSmsInfo("Un nouveau code a été envoyé.");
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : "Renvoi impossible.");
     }
   }
 
@@ -229,6 +323,21 @@ export default function SignupPage() {
                   placeholder="toi@exemple.sn"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="telephone" className="mb-1.5 block text-sm font-medium">
+                  Téléphone (SMS)
+                </label>
+                <Input
+                  id="telephone"
+                  type="tel"
+                  autoComplete="tel"
+                  required
+                  placeholder="77 123 45 67"
+                  value={telephone}
+                  onChange={(e) => setTelephone(e.target.value)}
                 />
               </div>
 
