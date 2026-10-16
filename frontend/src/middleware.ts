@@ -34,6 +34,17 @@ export async function middleware(request: NextRequest) {
   }
 
   // ---------------- MODE SUPABASE RÉEL ----------------
+  // Le lien « Confirmer l'adresse e-mail » de Supabase atterrit sur la
+  // racine avec ?code= (Site URL sans chemin) : on l'achemine vers le
+  // handler qui échange le code en session (évite la page blanche).
+  const code = request.nextUrl.searchParams.get("code");
+  if (code && request.nextUrl.pathname === "/") {
+    const cb = request.nextUrl.clone();
+    cb.pathname = "/auth/callback";
+    cb.searchParams.set("code", code);
+    return NextResponse.redirect(cb);
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || "",
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
