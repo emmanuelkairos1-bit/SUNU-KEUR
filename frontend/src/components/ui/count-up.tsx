@@ -36,7 +36,7 @@ export function CountUp({
   useEffect(() => spring.on("change", (v) => {
     setDisplay(
       currency
-        ? fcfa(v).replace(" F", "")
+        ? fcfa(v)
         : v.toLocaleString("fr-FR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
     );
   }), [spring, currency, decimals]);
@@ -46,7 +46,6 @@ export function CountUp({
       {prefix}
       {display}
       {suffix}
-      {currency && " F"}
     </motion.span>
   );
 }

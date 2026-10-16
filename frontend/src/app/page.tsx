@@ -5,9 +5,9 @@
 // =====================================================================
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion, useInView, useMotionValueEvent, useScroll } from "framer-motion";
+import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import {
   ArrowRight,
@@ -37,7 +37,7 @@ import { staggerItem } from "@/components/ui/motion";
 import { cn, fcfa, lienWhatsApp } from "@/lib/utils";
 
 // Contact WhatsApp affiché sur la landing (canal de vente Sunu Keur)
-const CONTACT_WHATSAPP = "+221 77 421 84 90";
+const CONTACT_WHATSAPP = "+221 78 157 09 24";
 const LIEN_WHATSAPP = lienWhatsApp(
   CONTACT_WHATSAPP,
   "Bonjour Sunu Keur ! Je souhaite des infos sur la gestion locative (fini le cahier)."
@@ -68,36 +68,27 @@ function RevealGrid({ children, className }: { children: ReactNode; className?: 
 }
 
 // ---------------------------------------------------------------------
-// Texte animé lettre par lettre
+// Texte animé — par ligne entière (jamais lettre par lettre).
+// La découpe en lettres inline-block cassait les mots au rendu
+// (« coup » → « co / up ») et chaque lettre promue en calque GPU
+// perdait le dégradé du parent (texte transparent jusqu'au repaint).
+// Animation CSS pur compositeur : le texte finit toujours visible.
 // ---------------------------------------------------------------------
 function AnimatedText({
   text,
   className,
-  delay = 0,
-  letterDelay = 0.04
+  delay = 0
 }: {
   text: string;
   className?: string;
   delay?: number;
-  letterDelay?: number;
 }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
-
   return (
-    <span ref={ref} className={className} aria-label={text}>
-      {Array.from(text).map((ch, i) => (
-        <motion.span
-          key={`${ch}-${i}`}
-          aria-hidden="true"
-          className="inline-block whitespace-pre"
-          initial={{ opacity: 0, y: 28, rotateX: -60 }}
-          animate={inView ? { opacity: 1, y: 0, rotateX: 0 } : undefined}
-          transition={{ delay: delay + i * letterDelay, type: "spring", stiffness: 260, damping: 20 }}
-        >
-          {ch}
-        </motion.span>
-      ))}
+    <span
+      className={cn("titre-anime inline-block", className)}
+      style={{ animationDelay: `${delay}s` }}
+    >
+      {text}
     </span>
   );
 }
@@ -365,7 +356,6 @@ function Hero() {
               text="Tes loyers en un coup d'œil."
               className="text-gradient"
               delay={0.55}
-              letterDelay={0.03}
             />
           </h1>
 

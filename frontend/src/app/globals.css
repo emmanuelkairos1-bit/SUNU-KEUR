@@ -73,6 +73,19 @@
   }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Titre hero : animation CSS pur compositeur (temporelle, ne dépend
+     d'aucune boucle JS — le texte ne peut jamais rester bloqué invisible). */
+  .titre-anime {
+    animation: titre-entree 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  @keyframes titre-entree {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .titre-anime { animation: none; }
+  }
 }
 
 /* Bouton ripple (s'utilise via composant <Button ripple/>) */
