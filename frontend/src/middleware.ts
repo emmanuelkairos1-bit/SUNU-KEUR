@@ -1,13 +1,24 @@
 // =====================================================================
 // MIDDLEWARE — protège /dashboard, /loyers, etc. + redirection par rôle
-// Mode local (pas de vraies clés Supabase) : on accepte la requête si le
-// cookie non-HttpOnly "local_auth" est présent, sinon on redirige /login.
-// Mode Supabase réel : comportement d'origine (vérification via cookies).
+// Mode local (pas de vraies clés) : on accepte la requête si le cookie
+// non-HttpOnly "local_auth" est présent, sinon on redirige /login.
+// Mode Supabase réel : vérification via les cookies SSR.
 // =====================================================================
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTEGEES = ["/dashboard", "/loyers", "/locataires", "/finances", "/facturation", "/paiements", "/owner", "/locataire", "/onboarding"];
+const PROTEGEES = [
+  "/dashboard",
+  "/loyers",
+  "/locataires",
+  "/finances",
+  "/facturation",
+  "/paiements",
+  "/owner",
+  "/locataire",
+  "/onboarding",
+  "/immeubles"
+];
 const CLE_COOKIE_LOCAL = "local_auth";
 
 function estLocal(): boolean {
@@ -16,35 +27,32 @@ function estLocal(): boolean {
 }
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request });
-
   const path = request.nextUrl.pathname;
   const estProtegee = PROTEGEES.some((p) => path.startsWith(p));
+
+  // Origine publique fiable (Render expose l'origin interne localhost:10000).
+  const xfh = request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
+  const xfp = request.headers.get("x-forwarded-proto") || "https";
+  const envOrigin = process.env.NEXT_PUBLIC_SITE_URL;
+  const baseOrigin =
+    (envOrigin && !envOrigin.includes("localhost"))
+      ? envOrigin.replace(/\/$/, "")
+      : (!xfh.includes("localhost") && xfh
+        ? `${xfp}://${xfh}`
+        : "https://sunu-keur-web.onrender.com");
+
+  let response = NextResponse.next({ request });
 
   // ---------------- MODE LOCAL ----------------
   if (estLocal()) {
     const uid = request.cookies.get(CLE_COOKIE_LOCAL)?.value;
     if (estProtegee && !uid) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("next", path);
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(`${baseOrigin}/login?next=${encodeURIComponent(path)}`);
     }
     return response;
   }
 
   // ---------------- MODE SUPABASE RÉEL ----------------
-  // Le lien « Confirmer l'adresse e-mail » de Supabase atterrit sur la
-  // racine avec ?code= (Site URL sans chemin) : on l'achemine vers le
-  // handler qui échange le code en session (évite la page blanche).
-  const code = request.nextUrl.searchParams.get("code");
-  if (code && request.nextUrl.pathname === "/") {
-    const cb = request.nextUrl.clone();
-    cb.pathname = "/auth/callback";
-    cb.searchParams.set("code", code);
-    return NextResponse.redirect(cb);
-  }
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || "",
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
@@ -72,10 +80,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (estProtegee && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("next", path);
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(`${baseOrigin}/login?next=${encodeURIComponent(path)}`);
   }
 
   return response;
