@@ -349,42 +349,31 @@ def generer_facture_pdf(data: dict) -> bytes:
     )
     story += [t_lignes, Spacer(1, 10)]
 
-    # Arrêtée à la somme + QR de paiement
-    qr_url = data.get("qr_url") or data.get("url_paiement") or ""
+    # Conditions de reglement -- version allegée, sans lien/QR backend
+    conditions = data.get("note") or "Règlement par Wave, Orange Money, Free Money ou espèces. Merci pour votre confiance."
     bloc_fin = [
         Paragraph(
             f"<b>Arrêtée la présente facture à la somme de :</b> {montant_en_lettres(total_general)} "
-            f"({fcfa(total_general)}).<br/><br/>{data.get('note') or 'Règlement par Wave, Orange Money, Free Money ou espèces. Merci pour votre confiance.'}",
+            f"({fcfa(total_general)}).<br/><br/>{conditions}",
             st["texte"],
         )
     ]
-    if qr_url:
-        bloc_fin.append(
-            Paragraph(
-                f"Scannez ce QR code pour consulter ou régler la facture en ligne :<br/>"
-                f'<font color="#F59E0B"><b>{qr_url}</b></font>',
-                st["petit"],
-            )
-        )
     t_fin = Table(
-        [[Paragraph("<b>PAIEMENT &amp; CONDITIONS</b>", st["petit"]), ""],
-         [Paragraph("<br/>".join(str(x) for x in bloc_fin), st["texte"]),
-          _qr_flowable(qr_url) if qr_url else Paragraph("—", st["petit"])]],
-        colWidths=[LARGEUR - 68 - 100, 100],
+        [[Paragraph("<b>CONDITIONS DE RÈGLEMENT</b>", st["petit"]), ""]] +
+        [[Paragraph("<br/>".join(str(x) for x in bloc_fin), st["texte"]), ""]],
+        colWidths=[LARGEUR - 68, 0],
     )
-    t_fin.setStyle(
-        TableStyle([
-            ("SPAN", (0, 0), (1, 0)),
-            ("BACKGROUND", (0, 0), (-1, 0), GRIS_CLAIR),
-            ("BOX", (0, 0), (-1, -1), 0.4, C_BLOC),
-            ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ("ALIGN", (1, 1), (1, 1), "CENTER"),
-            ("TOPPADDING", (0, 0), (-1, -1), 6),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-            ("LEFTPADDING", (0, 0), (-1, -1), 6),
-        ])
-    )
+    t_fin.setStyle(TableStyle([
+        ("SPAN", (0, 0), (1, 0)),
+        ("BACKGROUND", (0, 0), (-1, 0), GRIS_CLAIR),
+        ("BOX", (0, 0), (-1, -1), 0.4, C_BLOC),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+    ]))
     story.append(t_fin)
+
 
     doc.build(story, onFirstPage=_callbacks("Facture"), onLaterPages=_callbacks("Facture"))
     return buf.getvalue()
