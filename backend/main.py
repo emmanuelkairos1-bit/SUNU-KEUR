@@ -34,6 +34,10 @@ _origins = list(dict.fromkeys(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
+    # Render peut suffixer le nom du service (sunu-keur-web-xxxx.onrender.com)
+    # si le nom souhaité est déjà pris : on accepte tout sous-domaine
+    # *.onrender.com pour que le CORS reste valide quelle que soit l'URL réelle.
+    allow_origin_regex=r"https://[a-z0-9-]+\.onrender\.com",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
