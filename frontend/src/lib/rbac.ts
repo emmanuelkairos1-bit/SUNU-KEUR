@@ -9,6 +9,7 @@ import type { RoleUtilisateur } from "@/lib/types";
 const ACCES: Record<string, RoleUtilisateur[]> = {
   "/onboarding": ["gerant", "super_admin"],
   "/dashboard": ["gerant", "super_admin"],
+  "/immeubles": ["gerant", "super_admin"],
   "/loyers": ["gerant", "super_admin"],
   "/locataires": ["gerant", "super_admin"],
   "/finances": ["gerant", "super_admin"],

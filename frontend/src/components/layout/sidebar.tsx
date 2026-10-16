@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard, roles: ["gerant", "super_admin"] },
+  { href: "/immeubles", label: "Immeubles", icon: Building2, roles: ["gerant", "super_admin"] },
   { href: "/loyers", label: "Loyers", icon: Wallet, roles: ["gerant", "super_admin"] },
   { href: "/locataires", label: "Locataires", icon: Users, roles: ["gerant", "super_admin"] },
   { href: "/finances", label: "Finances", icon: Building2, roles: ["gerant", "super_admin"] },

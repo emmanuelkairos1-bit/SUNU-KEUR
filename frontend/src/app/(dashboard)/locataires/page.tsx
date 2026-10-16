@@ -229,7 +229,7 @@ export default function PageLocataires() {
   const compteArchives = useMemo(() => locataires.filter((l) => l.statut === "archive").length, [locataires]);
 
   const appartementsDisponibles = useMemo(
-    () => appartements.filter((a) => a.statut === "vacant" || a.id === form.appartementId),
+    () => appartements.filter((a) => a.statut !== "occupe" || a.id === form.appartementId),
     [appartements, form.appartementId]
   );
 
@@ -747,7 +747,7 @@ export default function PageLocataires() {
                   {appartementsDisponibles.map((a) => (
                     <option key={a.id} value={a.id}>
                       App. {a.numero} — {a.immeubles?.nom ?? "—"} — {fcfa(Number(a.loyer_mensuel))}/mois
-                      {a.statut === "vacant" ? "" : " (occupé)"}
+                      {a.statut && a.statut !== "vacant" ? " (occupé)" : ""}
                     </option>
                   ))}
                 </Select>

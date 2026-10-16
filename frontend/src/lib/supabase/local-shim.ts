@@ -397,6 +397,9 @@ class RequeteLocale implements PromiseLike<Resultat<unknown>> {
         if (!copie.id) copie.id = uuid();
         if (!copie.created_at) copie.created_at = maintenant;
         if (!copie.updated_at) copie.updated_at = maintenant;
+        // Valeurs par défaut métier (le shim n'a pas de schéma DB) :
+        // un appartement créé est « vacant » tant qu'un locataire l'occupe.
+        if (this.table === "appartements" && !copie.statut) copie.statut = "vacant";
         if (this.mode === "upsert") {
           const idx = lignes.findIndex((l) => l.id === copie.id);
           if (idx >= 0) lignes[idx] = { ...lignes[idx], ...copie };
