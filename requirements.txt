@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pydantic
+supabase
+python-dotenv
+reportlab
+python-docx
+openpyxl
+loguru
+pytz
+playsound
